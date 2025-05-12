@@ -86,6 +86,9 @@ function endGame() {
     clearInterval(timerInterval);
     gameActive = false;
     
+    // Visualize average weights
+    visualizeAverageWeights();
+    
     // Show/hide buttons
     startBtn.style.display = 'inline-block';
     weighBtn.style.display = 'none';
@@ -194,12 +197,13 @@ function nextPenguin() {
 }
 
 function addToResultsTable(penguin) {
-    // Create result object with timestamp
+    // Create result object with timestamp and additional details
     const result = {
         name: penguin.name,
         distro: penguin.distro,
         weight: penguin.weight,
-        time: timeLeft
+        time: timeLeft,
+        timestamp: new Date().toLocaleTimeString() // Add timestamp
     };
     
     // Add to results array
@@ -221,14 +225,87 @@ function addToResultsTable(penguin) {
     const timeCell = document.createElement('td');
     timeCell.textContent = `${result.time}s`;
     
+    const timestampCell = document.createElement('td');
+    timestampCell.textContent = result.timestamp;
+    
     // Append cells to row
     row.appendChild(nameCell);
     row.appendChild(distroCell);
     row.appendChild(weightCell);
     row.appendChild(timeCell);
+    row.appendChild(timestampCell);
     
     // Add row to table
     resultsBody.prepend(row); // Add to top so newest is first
+}
+
+function visualizeAverageWeights() {
+    // Group penguins by their name
+    const nameWeights = {};
+    const nameCounts = {};
+
+    weighingResults.forEach(result => {
+        // Extract the base name (remove potential numeric suffix)
+        const baseName = result.name.replace(/-\d+$/, '');
+        
+        if (!nameWeights[baseName]) {
+            nameWeights[baseName] = 0;
+            nameCounts[baseName] = 0;
+        }
+        nameWeights[baseName] += result.weight;
+        nameCounts[baseName]++;
+    });
+
+    // Calculate average weights
+    const averageWeights = {};
+    Object.keys(nameWeights).forEach(name => {
+        averageWeights[name] = 
+            nameWeights[name] / nameCounts[name];
+    });
+
+    // Create visualization container
+    const visualizationContainer = document.createElement('div');
+    visualizationContainer.className = 'weight-visualization';
+    visualizationContainer.innerHTML = '<h4>Average Weight by Penguin Name</h4>';
+
+    // Create bar graph
+    const graphContainer = document.createElement('div');
+    graphContainer.className = 'weight-graph';
+
+    // Find max weight for scaling
+    const maxWeight = Math.max(...Object.values(averageWeights));
+
+    Object.entries(averageWeights)
+        .sort((a, b) => b[1] - a[1]) // Sort in descending order
+        .forEach(([name, avgWeight]) => {
+            const barContainer = document.createElement('div');
+            barContainer.className = 'weight-bar-container';
+
+            const barLabel = document.createElement('span');
+            barLabel.className = 'bar-label';
+            barLabel.textContent = `${name}: ${avgWeight.toFixed(1)} kg (${nameCounts[name]} weighings)`;
+
+            const bar = document.createElement('div');
+            bar.className = 'weight-bar';
+            bar.style.width = `${(avgWeight / maxWeight) * 100}%`;
+            
+            barContainer.appendChild(barLabel);
+            barContainer.appendChild(bar);
+            graphContainer.appendChild(barContainer);
+        });
+
+    visualizationContainer.appendChild(graphContainer);
+
+    // Add to results container
+    const resultsContainer = document.querySelector('.results-container');
+    
+    // Remove any existing weight visualization
+    const existingVisualization = resultsContainer.querySelector('.weight-visualization');
+    if (existingVisualization) {
+        existingVisualization.remove();
+    }
+    
+    resultsContainer.appendChild(visualizationContainer);
 }
 
 function showMessage(text) {
