@@ -1,0 +1,38 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Penguin Weighing</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-container">Weighed: <span id="score">0</span></div>
+            <div class="timer-container">Time: <span id="timer">60</span>s</div>
+        </div>
+        
+        <div class="game-area">
+            <div class="island">
+                <div class="scale-area">
+                    <div class="scale">
+                        <div class="scale-reading" id="scale-reading">0.0 kg</div>
+                        <div class="scale-platform"></div>
+                    </div>
+                </div>
+                <div class="queue-area" id="queue-area">
+                    <!-- Penguins will be added here -->
+                </div>
+            </div>
+            <div class="message-box" id="message-box"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="weigh-btn">Weigh Penguin</button>
+            <button id="next-btn">Next Penguin</button>
+            <button id="start-btn">Start Game</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
