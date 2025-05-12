@@ -1,15 +1,75 @@
 // Penguin data - names and weights
 const penguinTypes = [
-    { name: "Tux", weight: 22.5, distro: "Linux Kernel" },
-    { name: "Konqi", weight: 18.7, distro: "KDE" },
-    { name: "Beastie", weight: 20.3, distro: "BSD" },
-    { name: "Xue", weight: 19.1, distro: "Xubuntu" },
-    { name: "Penny", weight: 16.4, distro: "Debian" },
-    { name: "Dash", weight: 15.8, distro: "Ubuntu" },
-    { name: "Ferris", weight: 17.2, distro: "Fedora" },
-    { name: "Addy", weight: 21.0, distro: "Arch" },
-    { name: "Gentoo", weight: 23.6, distro: "Gentoo" },
-    { name: "Wilber", weight: 14.8, distro: "GIMP" }
+    { 
+        name: "Tux", 
+        weight: 22.5, 
+        distro: "Linux Kernel", 
+        wingLength: 25.3, 
+        beakLength: 8.1 
+    },
+    { 
+        name: "Konqi", 
+        weight: 18.7, 
+        distro: "KDE", 
+        wingLength: 22.7, 
+        beakLength: 7.5 
+    },
+    { 
+        name: "Beastie", 
+        weight: 20.3, 
+        distro: "BSD", 
+        wingLength: 23.9, 
+        beakLength: 7.8 
+    },
+    { 
+        name: "Xue", 
+        weight: 19.1, 
+        distro: "Xubuntu", 
+        wingLength: 21.6, 
+        beakLength: 7.2 
+    },
+    { 
+        name: "Penny", 
+        weight: 16.4, 
+        distro: "Debian", 
+        wingLength: 20.5, 
+        beakLength: 6.9 
+    },
+    { 
+        name: "Dash", 
+        weight: 15.8, 
+        distro: "Ubuntu", 
+        wingLength: 19.8, 
+        beakLength: 6.7 
+    },
+    { 
+        name: "Ferris", 
+        weight: 17.2, 
+        distro: "Fedora", 
+        wingLength: 21.2, 
+        beakLength: 7.0 
+    },
+    { 
+        name: "Addy", 
+        weight: 21.0, 
+        distro: "Arch", 
+        wingLength: 22.4, 
+        beakLength: 7.6 
+    },
+    { 
+        name: "Gentoo", 
+        weight: 23.6, 
+        distro: "Gentoo", 
+        wingLength: 24.5, 
+        beakLength: 8.3 
+    },
+    { 
+        name: "Wilber", 
+        weight: 14.8, 
+        distro: "GIMP", 
+        wingLength: 19.1, 
+        beakLength: 6.5 
+    }
 ];
 
 // Game state
@@ -106,16 +166,18 @@ function generatePenguinQueue(count) {
         // Get a random penguin type
         const penguinType = shuffled[i % shuffled.length];
         
-        // Create more varied weight randomization
+        // More varied measurements
         const actualWeight = Number((penguinType.weight + (Math.random() * 4 - 2)).toFixed(1));
+        const actualWingLength = Number((penguinType.wingLength + (Math.random() * 2 - 1)).toFixed(1));
+        const actualBeakLength = Number((penguinType.beakLength + (Math.random() * 1 - 0.5)).toFixed(1));
         
-        // Create a penguin object
         const penguin = {
             id: Date.now() + i,
-            // Randomly select name or generate a variation
             name: Math.random() > 0.5 ? penguinType.name : `${penguinType.name}-${Math.floor(Math.random() * 100)}`,
             distro: penguinType.distro,
             weight: actualWeight,
+            wingLength: actualWingLength,
+            beakLength: actualBeakLength,
             element: null
         };
         
@@ -197,22 +259,21 @@ function nextPenguin() {
 }
 
 function addToResultsTable(penguin) {
-    // Create result object with timestamp and additional details
     const result = {
         name: penguin.name,
         distro: penguin.distro,
         weight: penguin.weight,
+        wingLength: penguin.wingLength,
+        beakLength: penguin.beakLength,
         time: timeLeft,
-        timestamp: new Date().toLocaleTimeString() // Add timestamp
+        timestamp: new Date().toLocaleTimeString()
     };
     
-    // Add to results array
     weighingResults.push(result);
     
-    // Create table row
     const row = document.createElement('tr');
     
-    // Add cells for each property
+    // Existing cells
     const nameCell = document.createElement('td');
     nameCell.textContent = result.name;
     
@@ -222,140 +283,154 @@ function addToResultsTable(penguin) {
     const weightCell = document.createElement('td');
     weightCell.textContent = result.weight.toFixed(1);
     
+    // New cells for wing and beak measurements
+    const wingLengthCell = document.createElement('td');
+    wingLengthCell.textContent = result.wingLength.toFixed(1);
+    
+    const beakLengthCell = document.createElement('td');
+    beakLengthCell.textContent = result.beakLength.toFixed(1);
+    
     const timeCell = document.createElement('td');
     timeCell.textContent = `${result.time}s`;
     
     const timestampCell = document.createElement('td');
     timestampCell.textContent = result.timestamp;
     
-    // Append cells to row
+    // Append all cells to row
     row.appendChild(nameCell);
     row.appendChild(distroCell);
     row.appendChild(weightCell);
+    row.appendChild(wingLengthCell);
+    row.appendChild(beakLengthCell);
     row.appendChild(timeCell);
     row.appendChild(timestampCell);
     
-    // Add row to table
-    resultsBody.prepend(row); // Add to top so newest is first
+    resultsBody.prepend(row);
 }
 
 function visualizeAverageWeights() {
-    // Create visualization container with coordinate axes
+    // Create visualization container
     const visualizationContainer = document.createElement('div');
     visualizationContainer.className = 'weight-visualization';
-    visualizationContainer.innerHTML = '<h4>Penguin Weight Distribution</h4>';
+    visualizationContainer.innerHTML = '<h4>Penguin Measurements Distribution</h4>';
 
-    // Create graph canvas for precise coordinate visualization
+    // Create graph canvas
     const graphCanvas = document.createElement('canvas');
     graphCanvas.className = 'weight-graph-canvas';
-    graphCanvas.width = 600;
-    graphCanvas.height = 400;
+    graphCanvas.width = 800;
+    graphCanvas.height = 600;
     
     const ctx = graphCanvas.getContext('2d');
 
-    // Prepare data
-    const nameWeights = {};
-    const nameCounts = {};
+    // Collect data for different measurements
+    const measurementTypes = ['weight', 'wingLength', 'beakLength'];
+    const visualizations = {};
 
-    weighingResults.forEach(result => {
-        const baseName = result.name.replace(/-\d+$/, '');
+    measurementTypes.forEach(measureType => {
+        const nameValues = {};
+        const nameCounts = {};
+
+        weighingResults.forEach(result => {
+            const baseName = result.name.replace(/-\d+$/, '');
+            
+            if (!nameValues[baseName]) {
+                nameValues[baseName] = 0;
+                nameCounts[baseName] = 0;
+            }
+            nameValues[baseName] += result[measureType];
+            nameCounts[baseName]++;
+        });
+
+        // Calculate average values
+        const averageValues = {};
+        const names = [];
+        const values = [];
+
+        Object.keys(nameValues).forEach(name => {
+            const avgValue = nameValues[name] / nameCounts[name];
+            averageValues[name] = avgValue;
+            names.push(name);
+            values.push(avgValue);
+        });
+
+        visualizations[measureType] = { 
+            names, 
+            values, 
+            averageValues, 
+            nameCounts 
+        };
+    });
+
+    // Function to create a separate graph for each measurement type
+    function createMeasurementGraph(measureType, graphPosition) {
+        const { names, values, averageValues, nameCounts } = visualizations[measureType];
         
-        if (!nameWeights[baseName]) {
-            nameWeights[baseName] = 0;
-            nameCounts[baseName] = 0;
-        }
-        nameWeights[baseName] += result.weight;
-        nameCounts[baseName]++;
-    });
+        const graphWidth = 250;
+        const graphHeight = 250;
+        const xOffset = (graphPosition % 2) * 350 + 50;
+        const yOffset = Math.floor(graphPosition / 2) * 350 + 50;
 
-    // Calculate average weights
-    const averageWeights = {};
-    const names = [];
-    const weights = [];
+        // Clear previous graph area
+        ctx.clearRect(xOffset - 10, yOffset - 10, graphWidth + 20, graphHeight + 20);
 
-    Object.keys(nameWeights).forEach(name => {
-        const avgWeight = nameWeights[name] / nameCounts[name];
-        averageWeights[name] = avgWeight;
-        names.push(name);
-        weights.push(avgWeight);
-    });
+        // Draw graph border
+        ctx.strokeStyle = '#ddd';
+        ctx.strokeRect(xOffset, yOffset, graphWidth, graphHeight);
 
-    // Draw coordinate axes
-    function drawAxes() {
+        // Title
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${measureType.charAt(0).toUpperCase() + measureType.slice(1)} Distribution`, 
+            xOffset + graphWidth / 2, yOffset - 20);
+
+        // Axes and grid
         ctx.beginPath();
-        ctx.moveTo(50, 350);  // Origin
-        ctx.lineTo(50, 50);   // Y-axis
-        ctx.lineTo(550, 50);  // X-axis
+        ctx.moveTo(xOffset, yOffset + graphHeight);
+        ctx.lineTo(xOffset + graphWidth, yOffset + graphHeight);
+        ctx.moveTo(xOffset, yOffset);
+        ctx.lineTo(xOffset, yOffset + graphHeight);
         ctx.strokeStyle = '#333';
         ctx.stroke();
 
-        // Y-axis labels (weight)
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#333';
-        const maxWeight = Math.max(...weights);
-        const minWeight = Math.min(...weights);
-        
-        for (let i = 0; i <= 5; i++) {
-            const yPos = 350 - (i * 60);
-            const weightValue = minWeight + (i * (maxWeight - minWeight) / 5);
-            ctx.fillText(weightValue.toFixed(1), 45, yPos);
+        // Calculate min and max
+        const maxValue = Math.max(...values);
+        const minValue = Math.min(...values);
+
+        // Plot data points
+        names.forEach((name, index) => {
+            const value = averageValues[name];
+            const count = nameCounts[name];
             
-            // Light grid lines
+            const xPos = xOffset + (index + 1) * (graphWidth / (names.length + 1));
+            const yPos = yOffset + graphHeight - 
+                ((value - minValue) / (maxValue - minValue)) * (graphHeight - 20);
+
+            // Data point
             ctx.beginPath();
-            ctx.moveTo(50, yPos);
-            ctx.lineTo(550, yPos);
-            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-            ctx.stroke();
-        }
-
-        // X-axis labels (penguin names)
-        ctx.textAlign = 'center';
-        names.forEach((name, index) => {
-            const xPos = 50 + (index + 1) * (500 / (names.length + 1));
-            ctx.fillText(name, xPos, 370);
-        });
-    }
-
-    // Plot data points
-    function plotDataPoints() {
-        names.forEach((name, index) => {
-            const weight = averageWeights[name];
-            const xPos = 50 + (index + 1) * (500 / (names.length + 1));
-            const yPos = 350 - ((weight - Math.min(...weights)) / (Math.max(...weights) - Math.min(...weights)) * 300);
-
-            // Draw point
-            ctx.beginPath();
-            ctx.arc(xPos, yPos, 8, 0, 2 * Math.PI);
+            ctx.arc(xPos, yPos, 5, 0, 2 * Math.PI);
             ctx.fillStyle = '#0a75ff';
             ctx.fill();
 
-            // Draw count as text near point
+            // Name label
             ctx.fillStyle = '#333';
-            ctx.fillText(`(${nameCounts[name]})`, xPos, yPos - 10);
+            ctx.font = '10px Arial';
+            ctx.save();
+            ctx.translate(xPos, yOffset + graphHeight + 10);
+            ctx.rotate(-Math.PI / 4);
+            ctx.textAlign = 'right';
+            ctx.fillText(name, 0, 0);
+            ctx.restore();
+
+            // Count label
+            ctx.fillText(`(${count})`, xPos, yPos - 10);
         });
     }
 
-    // Draw title for axes
-    function drawTitles() {
-        ctx.save();
-        ctx.fillStyle = '#333';
-        ctx.font = 'bold 12px Arial';
-        
-        // X-axis title
-        ctx.textAlign = 'center';
-        ctx.fillText('Penguin Names', 300, 395);
-        
-        // Y-axis title
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText('Average Weight (kg)', -200, 20);
-        
-        ctx.restore();
-    }
-
-    // Render the graph
-    drawAxes();
-    plotDataPoints();
-    drawTitles();
+    // Create graphs for each measurement type
+    createMeasurementGraph('weight', 0);
+    createMeasurementGraph('wingLength', 1);
+    createMeasurementGraph('beakLength', 2);
 
     visualizationContainer.appendChild(graphCanvas);
 
