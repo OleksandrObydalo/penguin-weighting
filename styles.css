@@ -221,35 +221,13 @@ button:disabled {
     background-color: #f9f9f9;
     padding: 15px;
     border-radius: 8px;
-}
-
-.weight-visualization h4 {
-    text-align: center;
-    color: #0a75ff;
-    margin-bottom: 10px;
-}
-
-.weight-graph {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-}
-
-.weight-bar-container {
-    display: flex;
     align-items: center;
-    gap: 10px;
 }
 
-.bar-label {
-    flex: 0 0 150px;
-    font-size: 0.9rem;
-}
-
-.weight-bar {
-    flex: 1;
-    height: 20px;
-    background-color: #0a75ff;
-    border-radius: 5px;
-    transition: width 0.5s ease-in-out;
+.weight-graph-canvas {
+    border: 1px solid #ddd;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }

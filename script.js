@@ -240,12 +240,24 @@ function addToResultsTable(penguin) {
 }
 
 function visualizeAverageWeights() {
-    // Group penguins by their name
+    // Create visualization container with coordinate axes
+    const visualizationContainer = document.createElement('div');
+    visualizationContainer.className = 'weight-visualization';
+    visualizationContainer.innerHTML = '<h4>Penguin Weight Distribution</h4>';
+
+    // Create graph canvas for precise coordinate visualization
+    const graphCanvas = document.createElement('canvas');
+    graphCanvas.className = 'weight-graph-canvas';
+    graphCanvas.width = 600;
+    graphCanvas.height = 400;
+    
+    const ctx = graphCanvas.getContext('2d');
+
+    // Prepare data
     const nameWeights = {};
     const nameCounts = {};
 
     weighingResults.forEach(result => {
-        // Extract the base name (remove potential numeric suffix)
         const baseName = result.name.replace(/-\d+$/, '');
         
         if (!nameWeights[baseName]) {
@@ -258,43 +270,94 @@ function visualizeAverageWeights() {
 
     // Calculate average weights
     const averageWeights = {};
+    const names = [];
+    const weights = [];
+
     Object.keys(nameWeights).forEach(name => {
-        averageWeights[name] = 
-            nameWeights[name] / nameCounts[name];
+        const avgWeight = nameWeights[name] / nameCounts[name];
+        averageWeights[name] = avgWeight;
+        names.push(name);
+        weights.push(avgWeight);
     });
 
-    // Create visualization container
-    const visualizationContainer = document.createElement('div');
-    visualizationContainer.className = 'weight-visualization';
-    visualizationContainer.innerHTML = '<h4>Average Weight by Penguin Name</h4>';
+    // Draw coordinate axes
+    function drawAxes() {
+        ctx.beginPath();
+        ctx.moveTo(50, 350);  // Origin
+        ctx.lineTo(50, 50);   // Y-axis
+        ctx.lineTo(550, 50);  // X-axis
+        ctx.strokeStyle = '#333';
+        ctx.stroke();
 
-    // Create bar graph
-    const graphContainer = document.createElement('div');
-    graphContainer.className = 'weight-graph';
-
-    // Find max weight for scaling
-    const maxWeight = Math.max(...Object.values(averageWeights));
-
-    Object.entries(averageWeights)
-        .sort((a, b) => b[1] - a[1]) // Sort in descending order
-        .forEach(([name, avgWeight]) => {
-            const barContainer = document.createElement('div');
-            barContainer.className = 'weight-bar-container';
-
-            const barLabel = document.createElement('span');
-            barLabel.className = 'bar-label';
-            barLabel.textContent = `${name}: ${avgWeight.toFixed(1)} kg (${nameCounts[name]} weighings)`;
-
-            const bar = document.createElement('div');
-            bar.className = 'weight-bar';
-            bar.style.width = `${(avgWeight / maxWeight) * 100}%`;
+        // Y-axis labels (weight)
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#333';
+        const maxWeight = Math.max(...weights);
+        const minWeight = Math.min(...weights);
+        
+        for (let i = 0; i <= 5; i++) {
+            const yPos = 350 - (i * 60);
+            const weightValue = minWeight + (i * (maxWeight - minWeight) / 5);
+            ctx.fillText(weightValue.toFixed(1), 45, yPos);
             
-            barContainer.appendChild(barLabel);
-            barContainer.appendChild(bar);
-            graphContainer.appendChild(barContainer);
-        });
+            // Light grid lines
+            ctx.beginPath();
+            ctx.moveTo(50, yPos);
+            ctx.lineTo(550, yPos);
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            ctx.stroke();
+        }
 
-    visualizationContainer.appendChild(graphContainer);
+        // X-axis labels (penguin names)
+        ctx.textAlign = 'center';
+        names.forEach((name, index) => {
+            const xPos = 50 + (index + 1) * (500 / (names.length + 1));
+            ctx.fillText(name, xPos, 370);
+        });
+    }
+
+    // Plot data points
+    function plotDataPoints() {
+        names.forEach((name, index) => {
+            const weight = averageWeights[name];
+            const xPos = 50 + (index + 1) * (500 / (names.length + 1));
+            const yPos = 350 - ((weight - Math.min(...weights)) / (Math.max(...weights) - Math.min(...weights)) * 300);
+
+            // Draw point
+            ctx.beginPath();
+            ctx.arc(xPos, yPos, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0a75ff';
+            ctx.fill();
+
+            // Draw count as text near point
+            ctx.fillStyle = '#333';
+            ctx.fillText(`(${nameCounts[name]})`, xPos, yPos - 10);
+        });
+    }
+
+    // Draw title for axes
+    function drawTitles() {
+        ctx.save();
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 12px Arial';
+        
+        // X-axis title
+        ctx.textAlign = 'center';
+        ctx.fillText('Penguin Names', 300, 395);
+        
+        // Y-axis title
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Average Weight (kg)', -200, 20);
+        
+        ctx.restore();
+    }
+
+    // Render the graph
+    drawAxes();
+    plotDataPoints();
+    drawTitles();
+
+    visualizationContainer.appendChild(graphCanvas);
 
     // Add to results container
     const resultsContainer = document.querySelector('.results-container');
