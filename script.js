@@ -20,6 +20,7 @@ let timerInterval;
 let currentPenguin = null;
 let penguinQueue = [];
 let penguinOnScale = false;
+let weighingResults = []; // Array to store weighing results
 
 // DOM Elements
 const queueArea = document.getElementById('queue-area');
@@ -30,6 +31,7 @@ const weighBtn = document.getElementById('weigh-btn');
 const nextBtn = document.getElementById('next-btn');
 const startBtn = document.getElementById('start-btn');
 const messageBox = document.getElementById('message-box');
+const resultsBody = document.getElementById('results-body');
 
 // Event listeners
 startBtn.addEventListener('click', startGame);
@@ -44,14 +46,16 @@ function startGame() {
     penguinQueue = [];
     penguinOnScale = false;
     currentPenguin = null;
+    weighingResults = []; // Reset weighing results
     
     // Update UI
     scoreElement.textContent = score;
     timerElement.textContent = timeLeft;
     scaleReading.textContent = "0.0 kg";
     
-    // Clear the queue area
+    // Clear the queue area and results table
     queueArea.innerHTML = '';
+    resultsBody.innerHTML = '';
     
     // Generate initial queue of penguins
     generatePenguinQueue(5);
@@ -154,6 +158,9 @@ function weighPenguin() {
         // Show info about the penguin
         showMessage(`${currentPenguin.name} from ${currentPenguin.distro}!`);
         
+        // Add to results table
+        addToResultsTable(currentPenguin);
+        
         // Increment score
         score++;
         scoreElement.textContent = score;
@@ -185,6 +192,44 @@ function nextPenguin() {
     nextBtn.disabled = true;
 }
 
+function addToResultsTable(penguin) {
+    // Create result object with timestamp
+    const result = {
+        name: penguin.name,
+        distro: penguin.distro,
+        weight: penguin.weight,
+        time: timeLeft
+    };
+    
+    // Add to results array
+    weighingResults.push(result);
+    
+    // Create table row
+    const row = document.createElement('tr');
+    
+    // Add cells for each property
+    const nameCell = document.createElement('td');
+    nameCell.textContent = result.name;
+    
+    const distroCell = document.createElement('td');
+    distroCell.textContent = result.distro;
+    
+    const weightCell = document.createElement('td');
+    weightCell.textContent = result.weight.toFixed(1);
+    
+    const timeCell = document.createElement('td');
+    timeCell.textContent = `${result.time}s`;
+    
+    // Append cells to row
+    row.appendChild(nameCell);
+    row.appendChild(distroCell);
+    row.appendChild(weightCell);
+    row.appendChild(timeCell);
+    
+    // Add row to table
+    resultsBody.prepend(row); // Add to top so newest is first
+}
+
 function showMessage(text) {
     messageBox.textContent = text;
     messageBox.classList.add('show');
@@ -207,4 +252,3 @@ function init() {
 
 // Start the game
 init();
-
