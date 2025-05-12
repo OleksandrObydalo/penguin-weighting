@@ -103,13 +103,14 @@ function generatePenguinQueue(count) {
         // Get a random penguin type
         const penguinType = shuffled[i % shuffled.length];
         
-        // Create slightly randomized weight from base weight
-        const actualWeight = penguinType.weight + (Math.random() * 2 - 1).toFixed(1);
+        // Create more varied weight randomization
+        const actualWeight = Number((penguinType.weight + (Math.random() * 4 - 2)).toFixed(1));
         
         // Create a penguin object
         const penguin = {
             id: Date.now() + i,
-            name: penguinType.name,
+            // Randomly select name or generate a variation
+            name: Math.random() > 0.5 ? penguinType.name : `${penguinType.name}-${Math.floor(Math.random() * 100)}`,
             distro: penguinType.distro,
             weight: actualWeight,
             element: null
