@@ -1,75 +1,21 @@
-// Penguin data - names and weights
+// Penguin data - names and testing data
 const penguinTypes = [
-    { 
-        name: "Tux", 
-        weight: 22.5, 
-        distro: "Linux Kernel", 
-        wingLength: 25.3, 
-        beakLength: 8.1 
-    },
-    { 
-        name: "Konqi", 
-        weight: 18.7, 
-        distro: "KDE", 
-        wingLength: 22.7, 
-        beakLength: 7.5 
-    },
-    { 
-        name: "Beastie", 
-        weight: 20.3, 
-        distro: "BSD", 
-        wingLength: 23.9, 
-        beakLength: 7.8 
-    },
-    { 
-        name: "Xue", 
-        weight: 19.1, 
-        distro: "Xubuntu", 
-        wingLength: 21.6, 
-        beakLength: 7.2 
-    },
-    { 
-        name: "Penny", 
-        weight: 16.4, 
-        distro: "Debian", 
-        wingLength: 20.5, 
-        beakLength: 6.9 
-    },
-    { 
-        name: "Dash", 
-        weight: 15.8, 
-        distro: "Ubuntu", 
-        wingLength: 19.8, 
-        beakLength: 6.7 
-    },
-    { 
-        name: "Ferris", 
-        weight: 17.2, 
-        distro: "Fedora", 
-        wingLength: 21.2, 
-        beakLength: 7.0 
-    },
-    { 
-        name: "Addy", 
-        weight: 21.0, 
-        distro: "Arch", 
-        wingLength: 22.4, 
-        beakLength: 7.6 
-    },
-    { 
-        name: "Gentoo", 
-        weight: 23.6, 
-        distro: "Gentoo", 
-        wingLength: 24.5, 
-        beakLength: 8.3 
-    },
-    { 
-        name: "Wilber", 
-        weight: 14.8, 
-        distro: "GIMP", 
-        wingLength: 19.1, 
-        beakLength: 6.5 
-    }
+    { name: "Tux", distro: "Linux Kernel" },
+    { name: "Konqi", distro: "KDE" },
+    { name: "Beastie", distro: "BSD" },
+    { name: "Xue", distro: "Xubuntu" },
+    { name: "Penny", distro: "Debian" },
+    { name: "Dash", distro: "Ubuntu" },
+    { name: "Ferris", distro: "Fedora" },
+    { name: "Addy", distro: "Arch" },
+    { name: "Gentoo", distro: "Gentoo" },
+    { name: "Wilber", distro: "GIMP" }
+];
+
+// Version designs for A/B testing
+const versionDesigns = [
+    { name: "A", color: "#ff5e5e", layout: "Simple" },
+    { name: "B", color: "#5ea9ff", layout: "Complex" }
 ];
 
 // Game state
@@ -79,23 +25,26 @@ let timeLeft = 60;
 let timerInterval;
 let currentPenguin = null;
 let penguinQueue = [];
-let penguinOnScale = false;
-let weighingResults = []; // Array to store weighing results
+let penguinOnTest = false;
+let testingResults = []; // Array to store testing results
+let testStartTime = 0;
+let testVersion = null;
 
 // DOM Elements
 const queueArea = document.getElementById('queue-area');
-const scaleReading = document.getElementById('scale-reading');
 const scoreElement = document.getElementById('score');
 const timerElement = document.getElementById('timer');
-const weighBtn = document.getElementById('weigh-btn');
+const testBtn = document.getElementById('test-btn');
 const nextBtn = document.getElementById('next-btn');
 const startBtn = document.getElementById('start-btn');
 const messageBox = document.getElementById('message-box');
 const resultsBody = document.getElementById('results-body');
+const stationA = document.getElementById('station-a');
+const stationB = document.getElementById('station-b');
 
 // Event listeners
 startBtn.addEventListener('click', startGame);
-weighBtn.addEventListener('click', weighPenguin);
+testBtn.addEventListener('click', runTest);
 nextBtn.addEventListener('click', nextPenguin);
 
 // Game functions
@@ -104,25 +53,27 @@ function startGame() {
     score = 0;
     timeLeft = 60;
     penguinQueue = [];
-    penguinOnScale = false;
+    penguinOnTest = false;
     currentPenguin = null;
-    weighingResults = []; // Reset weighing results
+    testingResults = []; // Reset testing results
     
     // Update UI
     scoreElement.textContent = score;
     timerElement.textContent = timeLeft;
-    scaleReading.textContent = "0.0 kg";
     
     // Clear the queue area and results table
     queueArea.innerHTML = '';
     resultsBody.innerHTML = '';
+    
+    // Set up the testing stations
+    setupTestingStations();
     
     // Generate initial queue of penguins
     generatePenguinQueue(5);
     
     // Show/hide buttons
     startBtn.style.display = 'none';
-    weighBtn.style.display = 'inline-block';
+    testBtn.style.display = 'inline-block';
     nextBtn.style.display = 'inline-block';
     
     // Activate first penguin
@@ -139,23 +90,48 @@ function startGame() {
     }, 1000);
     
     // Show starting message
-    showMessage("Start weighing penguins!");
+    showMessage("Start A/B testing with penguins!");
+}
+
+function setupTestingStations() {
+    // Set up version A
+    const screenA = stationA.querySelector('.screen-content');
+    screenA.style.backgroundColor = versionDesigns[0].color;
+    
+    // Set up version B
+    const screenB = stationB.querySelector('.screen-content');
+    screenB.style.backgroundColor = versionDesigns[1].color;
+    
+    // Add timer displays to each station
+    if (!stationA.querySelector('.timer-display')) {
+        const timerA = document.createElement('div');
+        timerA.className = 'timer-display';
+        timerA.id = 'timer-a';
+        timerA.textContent = '0.0s';
+        stationA.appendChild(timerA);
+        
+        const timerB = document.createElement('div');
+        timerB.className = 'timer-display';
+        timerB.id = 'timer-b';
+        timerB.textContent = '0.0s';
+        stationB.appendChild(timerB);
+    }
 }
 
 function endGame() {
     clearInterval(timerInterval);
     gameActive = false;
     
-    // Visualize average weights
-    visualizeAverageWeights();
+    // Visualize A/B testing results
+    visualizeTestingResults();
     
     // Show/hide buttons
     startBtn.style.display = 'inline-block';
-    weighBtn.style.display = 'none';
+    testBtn.style.display = 'none';
     nextBtn.style.display = 'none';
     
     // Show end message
-    showMessage(`Game Over! You weighed ${score} penguins.`);
+    showMessage(`Testing complete! You tested ${score} penguins.`);
 }
 
 function generatePenguinQueue(count) {
@@ -166,18 +142,12 @@ function generatePenguinQueue(count) {
         // Get a random penguin type
         const penguinType = shuffled[i % shuffled.length];
         
-        // More varied measurements
-        const actualWeight = Number((penguinType.weight + (Math.random() * 4 - 2)).toFixed(1));
-        const actualWingLength = Number((penguinType.wingLength + (Math.random() * 2 - 1)).toFixed(1));
-        const actualBeakLength = Number((penguinType.beakLength + (Math.random() * 1 - 0.5)).toFixed(1));
-        
+        // Create a penguin object
         const penguin = {
             id: Date.now() + i,
+            // Randomly select name or generate a variation
             name: Math.random() > 0.5 ? penguinType.name : `${penguinType.name}-${Math.floor(Math.random() * 100)}`,
             distro: penguinType.distro,
-            weight: actualWeight,
-            wingLength: actualWingLength,
-            beakLength: actualBeakLength,
             element: null
         };
         
@@ -203,246 +173,233 @@ function activateNextPenguin() {
     currentPenguin = penguinQueue.shift();
     currentPenguin.element.classList.add('active');
     
+    // Randomly assign to group A or B
+    testVersion = Math.random() < 0.5 ? versionDesigns[0] : versionDesigns[1];
+    
     // Add more penguins if queue is getting low
     if (penguinQueue.length < 3) {
         generatePenguinQueue(3);
     }
 }
 
-function weighPenguin() {
-    if (!gameActive || !currentPenguin || penguinOnScale) return;
+function runTest() {
+    if (!gameActive || !currentPenguin || penguinOnTest) return;
     
-    // Move penguin to scale
+    // Move penguin to test station
     currentPenguin.element.classList.remove('active');
-    currentPenguin.element.classList.add('on-scale');
-    penguinOnScale = true;
+    currentPenguin.element.classList.add('on-test');
     
-    // Display weight with a slight delay for realism
+    // Add class based on version
+    if (testVersion.name === 'A') {
+        currentPenguin.element.classList.add('at-a');
+    } else {
+        currentPenguin.element.classList.add('at-b');
+    }
+    
+    penguinOnTest = true;
+    testStartTime = Date.now();
+    
+    // Start the test timers
+    const timerDisplay = document.getElementById(testVersion.name === 'A' ? 'timer-a' : 'timer-b');
+    const timerUpdateInterval = setInterval(() => {
+        const elapsedTime = (Date.now() - testStartTime) / 1000;
+        timerDisplay.textContent = `${elapsedTime.toFixed(1)}s`;
+    }, 100);
+    
+    // Simulate testing time - randomly between 2-6 seconds
+    const testingTime = 2000 + Math.random() * 4000;
+    
     setTimeout(() => {
-        scaleReading.textContent = `${currentPenguin.weight.toFixed(1)} kg`;
+        clearInterval(timerUpdateInterval);
+        
+        // Calculate final time spent on the test
+        const timeSpent = (Date.now() - testStartTime) / 1000;
         
         // Show info about the penguin
-        showMessage(`${currentPenguin.name} from ${currentPenguin.distro}!`);
+        showMessage(`${currentPenguin.name} from ${currentPenguin.distro} tested version ${testVersion.name} in ${timeSpent.toFixed(1)}s!`);
         
         // Add to results table
-        addToResultsTable(currentPenguin);
+        addToResultsTable(currentPenguin, timeSpent);
         
         // Increment score
         score++;
         scoreElement.textContent = score;
         
-        // Disable weigh button and enable next button
-        weighBtn.disabled = true;
+        // Disable test button and enable next button
+        testBtn.disabled = true;
         nextBtn.disabled = false;
         
-        // Play weighing sound
+        // Play testing complete sound
         playSound('weight_sound.mp3');
-    }, 800);
+    }, testingTime);
 }
 
 function nextPenguin() {
-    if (!gameActive || !penguinOnScale) return;
+    if (!gameActive || !penguinOnTest) return;
     
-    // Remove penguin from scale
+    // Remove penguin from test station
+    currentPenguin.element.classList.remove('on-test', 'at-a', 'at-b');
     currentPenguin.element.remove();
-    penguinOnScale = false;
+    penguinOnTest = false;
     
-    // Reset scale
-    scaleReading.textContent = "0.0 kg";
+    // Reset timers
+    document.getElementById('timer-a').textContent = '0.0s';
+    document.getElementById('timer-b').textContent = '0.0s';
     
     // Activate next penguin
     activateNextPenguin();
     
     // Reset buttons
-    weighBtn.disabled = false;
+    testBtn.disabled = false;
     nextBtn.disabled = true;
 }
 
-function addToResultsTable(penguin) {
+function addToResultsTable(penguin, timeSpent) {
+    // Create result object with timestamp and additional details
     const result = {
         name: penguin.name,
         distro: penguin.distro,
-        weight: penguin.weight,
-        wingLength: penguin.wingLength,
-        beakLength: penguin.beakLength,
-        time: timeLeft,
-        timestamp: new Date().toLocaleTimeString()
+        version: testVersion.name,
+        time: timeSpent.toFixed(1),
+        timestamp: new Date().toLocaleTimeString() // Add timestamp
     };
     
-    weighingResults.push(result);
+    // Add to results array
+    testingResults.push(result);
     
+    // Create table row
     const row = document.createElement('tr');
     
-    // Existing cells
+    // Add cells for each property
     const nameCell = document.createElement('td');
     nameCell.textContent = result.name;
     
     const distroCell = document.createElement('td');
     distroCell.textContent = result.distro;
     
-    const weightCell = document.createElement('td');
-    weightCell.textContent = result.weight.toFixed(1);
-    
-    // New cells for wing and beak measurements
-    const wingLengthCell = document.createElement('td');
-    wingLengthCell.textContent = result.wingLength.toFixed(1);
-    
-    const beakLengthCell = document.createElement('td');
-    beakLengthCell.textContent = result.beakLength.toFixed(1);
+    const versionCell = document.createElement('td');
+    versionCell.textContent = result.version;
     
     const timeCell = document.createElement('td');
-    timeCell.textContent = `${result.time}s`;
+    timeCell.textContent = result.time;
     
     const timestampCell = document.createElement('td');
     timestampCell.textContent = result.timestamp;
     
-    // Append all cells to row
+    // Append cells to row
     row.appendChild(nameCell);
     row.appendChild(distroCell);
-    row.appendChild(weightCell);
-    row.appendChild(wingLengthCell);
-    row.appendChild(beakLengthCell);
+    row.appendChild(versionCell);
     row.appendChild(timeCell);
     row.appendChild(timestampCell);
     
-    resultsBody.prepend(row);
+    // Add row to table
+    resultsBody.prepend(row); // Add to top so newest is first
 }
 
-function visualizeAverageWeights() {
+function visualizeTestingResults() {
+    // Group results by version
+    const versionA = testingResults.filter(result => result.version === 'A');
+    const versionB = testingResults.filter(result => result.version === 'B');
+    
+    // Calculate average time for each version
+    const avgTimeA = versionA.length > 0 
+        ? versionA.reduce((sum, result) => sum + parseFloat(result.time), 0) / versionA.length 
+        : 0;
+    
+    const avgTimeB = versionB.length > 0 
+        ? versionB.reduce((sum, result) => sum + parseFloat(result.time), 0) / versionB.length 
+        : 0;
+    
     // Create visualization container
     const visualizationContainer = document.createElement('div');
     visualizationContainer.className = 'weight-visualization';
-    visualizationContainer.innerHTML = '<h4>Penguin Measurements Distribution</h4>';
-
-    // Create graph canvas
-    const graphCanvas = document.createElement('canvas');
-    graphCanvas.className = 'weight-graph-canvas';
-    graphCanvas.width = 800;
-    graphCanvas.height = 600;
+    visualizationContainer.innerHTML = '<h4>A/B Testing Results</h4>';
     
-    const ctx = graphCanvas.getContext('2d');
-
-    // Collect data for different measurements
-    const measurementTypes = ['weight', 'wingLength', 'beakLength'];
-    const visualizations = {};
-
-    measurementTypes.forEach(measureType => {
-        const nameValues = {};
-        const nameCounts = {};
-
-        weighingResults.forEach(result => {
-            const baseName = result.name.replace(/-\d+$/, '');
-            
-            if (!nameValues[baseName]) {
-                nameValues[baseName] = 0;
-                nameCounts[baseName] = 0;
-            }
-            nameValues[baseName] += result[measureType];
-            nameCounts[baseName]++;
-        });
-
-        // Calculate average values
-        const averageValues = {};
-        const names = [];
-        const values = [];
-
-        Object.keys(nameValues).forEach(name => {
-            const avgValue = nameValues[name] / nameCounts[name];
-            averageValues[name] = avgValue;
-            names.push(name);
-            values.push(avgValue);
-        });
-
-        visualizations[measureType] = { 
-            names, 
-            values, 
-            averageValues, 
-            nameCounts 
-        };
-    });
-
-    // Function to create a separate graph for each measurement type
-    function createMeasurementGraph(measureType, graphPosition) {
-        const { names, values, averageValues, nameCounts } = visualizations[measureType];
-        
-        const graphWidth = 250;
-        const graphHeight = 250;
-        const xOffset = (graphPosition % 2) * 350 + 50;
-        const yOffset = Math.floor(graphPosition / 2) * 350 + 50;
-
-        // Clear previous graph area
-        ctx.clearRect(xOffset - 10, yOffset - 10, graphWidth + 20, graphHeight + 20);
-
-        // Draw graph border
-        ctx.strokeStyle = '#ddd';
-        ctx.strokeRect(xOffset, yOffset, graphWidth, graphHeight);
-
-        // Title
-        ctx.fillStyle = '#333';
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${measureType.charAt(0).toUpperCase() + measureType.slice(1)} Distribution`, 
-            xOffset + graphWidth / 2, yOffset - 20);
-
-        // Axes and grid
-        ctx.beginPath();
-        ctx.moveTo(xOffset, yOffset + graphHeight);
-        ctx.lineTo(xOffset + graphWidth, yOffset + graphHeight);
-        ctx.moveTo(xOffset, yOffset);
-        ctx.lineTo(xOffset, yOffset + graphHeight);
-        ctx.strokeStyle = '#333';
-        ctx.stroke();
-
-        // Calculate min and max
-        const maxValue = Math.max(...values);
-        const minValue = Math.min(...values);
-
-        // Plot data points
-        names.forEach((name, index) => {
-            const value = averageValues[name];
-            const count = nameCounts[name];
-            
-            const xPos = xOffset + (index + 1) * (graphWidth / (names.length + 1));
-            const yPos = yOffset + graphHeight - 
-                ((value - minValue) / (maxValue - minValue)) * (graphHeight - 20);
-
-            // Data point
-            ctx.beginPath();
-            ctx.arc(xPos, yPos, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = '#0a75ff';
-            ctx.fill();
-
-            // Name label
-            ctx.fillStyle = '#333';
-            ctx.font = '10px Arial';
-            ctx.save();
-            ctx.translate(xPos, yOffset + graphHeight + 10);
-            ctx.rotate(-Math.PI / 4);
-            ctx.textAlign = 'right';
-            ctx.fillText(name, 0, 0);
-            ctx.restore();
-
-            // Count label
-            ctx.fillText(`(${count})`, xPos, yPos - 10);
-        });
+    // Create bar graph container
+    const graphContainer = document.createElement('div');
+    graphContainer.className = 'ab-graph';
+    
+    // Create Version A column
+    const columnA = document.createElement('div');
+    columnA.className = 'graph-column';
+    
+    const labelA = document.createElement('div');
+    labelA.className = 'graph-label';
+    labelA.textContent = `Version A (${versionA.length} tests)`;
+    
+    const barContainerA = document.createElement('div');
+    barContainerA.className = 'graph-bar-container';
+    
+    const barA = document.createElement('div');
+    barA.className = 'graph-bar';
+    barA.style.backgroundColor = versionDesigns[0].color;
+    
+    const barValueA = document.createElement('div');
+    barValueA.className = 'bar-value';
+    barValueA.textContent = `${avgTimeA.toFixed(1)}s`;
+    
+    // Create Version B column
+    const columnB = document.createElement('div');
+    columnB.className = 'graph-column';
+    
+    const labelB = document.createElement('div');
+    labelB.className = 'graph-label';
+    labelB.textContent = `Version B (${versionB.length} tests)`;
+    
+    const barContainerB = document.createElement('div');
+    barContainerB.className = 'graph-bar-container';
+    
+    const barB = document.createElement('div');
+    barB.className = 'graph-bar';
+    barB.style.backgroundColor = versionDesigns[1].color;
+    
+    const barValueB = document.createElement('div');
+    barValueB.className = 'bar-value';
+    barValueB.textContent = `${avgTimeB.toFixed(1)}s`;
+    
+    // Calculate bar heights (inversely proportional to time - faster is better)
+    const maxTime = Math.max(avgTimeA, avgTimeB);
+    const normFactor = maxTime > 0 ? 100 / maxTime : 0;
+    
+    // Set bar heights
+    barA.style.height = `${avgTimeA * normFactor}%`;
+    barB.style.height = `${avgTimeB * normFactor}%`;
+    
+    // Assemble the graph
+    barContainerA.appendChild(barA);
+    barA.appendChild(barValueA);
+    columnA.appendChild(labelA);
+    columnA.appendChild(barContainerA);
+    
+    barContainerB.appendChild(barB);
+    barB.appendChild(barValueB);
+    columnB.appendChild(labelB);
+    columnB.appendChild(barContainerB);
+    
+    graphContainer.appendChild(columnA);
+    graphContainer.appendChild(columnB);
+    
+    // Add conclusion
+    const conclusion = document.createElement('div');
+    conclusion.style.textAlign = 'center';
+    conclusion.style.margin = '10px 0';
+    conclusion.style.fontWeight = 'bold';
+    
+    if (avgTimeA < avgTimeB) {
+        conclusion.textContent = 'Version A performed better with faster completion times!';
+    } else if (avgTimeB < avgTimeA) {
+        conclusion.textContent = 'Version B performed better with faster completion times!';
+    } else {
+        conclusion.textContent = 'Both versions performed equally.';
     }
-
-    // Create graphs for each measurement type
-    createMeasurementGraph('weight', 0);
-    createMeasurementGraph('wingLength', 1);
-    createMeasurementGraph('beakLength', 2);
-
-    visualizationContainer.appendChild(graphCanvas);
-
+    
+    // Add to visualization container
+    visualizationContainer.appendChild(graphContainer);
+    visualizationContainer.appendChild(conclusion);
+    
     // Add to results container
     const resultsContainer = document.querySelector('.results-container');
-    
-    // Remove any existing weight visualization
-    const existingVisualization = resultsContainer.querySelector('.weight-visualization');
-    if (existingVisualization) {
-        existingVisualization.remove();
-    }
-    
     resultsContainer.appendChild(visualizationContainer);
 }
 
@@ -462,7 +419,9 @@ function playSound(soundFile) {
 
 // Initialize the game
 function init() {
-    weighBtn.disabled = false;
+    testBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    testBtn.disabled = false;
     nextBtn.disabled = true;
 }
 
