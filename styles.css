@@ -190,6 +190,14 @@ button:disabled {
     display: none;
 }
 
+#reset-btn {
+    background-color: #ff6b6b;
+}
+
+#reset-btn:hover {
+    background-color: #ff4757;
+}
+
 .test-stations {
     display: flex;
     justify-content: space-around;

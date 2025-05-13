@@ -14,8 +14,8 @@ const penguinTypes = [
 
 // Version designs for A/B testing
 const versionDesigns = [
-    { name: "A", color: "#ff5e5e", layout: "Simple" },
-    { name: "B", color: "#5ea9ff", layout: "Complex" }
+    { name: "A", color: "#ff5e5e", layout: "Simple", tested: false },
+    { name: "B", color: "#5ea9ff", layout: "Complex", tested: false }
 ];
 
 // Game state
@@ -41,11 +41,13 @@ const messageBox = document.getElementById('message-box');
 const resultsBody = document.getElementById('results-body');
 const stationA = document.getElementById('station-a');
 const stationB = document.getElementById('station-b');
+const resetBtn = document.getElementById('reset-btn');
 
 // Event listeners
 startBtn.addEventListener('click', startGame);
 testBtn.addEventListener('click', runTest);
 nextBtn.addEventListener('click', nextPenguin);
+resetBtn.addEventListener('click', resetGame);
 
 // Game functions
 function startGame() {
@@ -173,8 +175,9 @@ function activateNextPenguin() {
     currentPenguin = penguinQueue.shift();
     currentPenguin.element.classList.add('active');
     
-    // Randomly assign to group A or B
-    testVersion = Math.random() < 0.5 ? versionDesigns[0] : versionDesigns[1];
+    // Cycle between versions in strict order
+    const untestedVersions = versionDesigns.filter(v => !v.tested);
+    testVersion = untestedVersions[0] || versionDesigns[0];
     
     // Add more penguins if queue is getting low
     if (penguinQueue.length < 3) {
@@ -184,6 +187,14 @@ function activateNextPenguin() {
 
 function runTest() {
     if (!gameActive || !currentPenguin || penguinOnTest) return;
+    
+    // Check if this version has already been tested for this penguin
+    const currentVersionDesign = versionDesigns.find(v => v.name === testVersion.name);
+    
+    if (currentVersionDesign.tested) {
+        showMessage(`${currentPenguin.name} has already been tested on Version ${testVersion.name}`);
+        return;
+    }
     
     // Move penguin to test station
     currentPenguin.element.classList.remove('active');
@@ -215,6 +226,9 @@ function runTest() {
         // Calculate final time spent on the test
         const timeSpent = (Date.now() - testStartTime) / 1000;
         
+        // Mark this version as tested
+        currentVersionDesign.tested = true;
+        
         // Show info about the penguin
         showMessage(`${currentPenguin.name} from ${currentPenguin.distro} tested version ${testVersion.name} in ${timeSpent.toFixed(1)}s!`);
         
@@ -245,6 +259,14 @@ function nextPenguin() {
     // Reset timers
     document.getElementById('timer-a').textContent = '0.0s';
     document.getElementById('timer-b').textContent = '0.0s';
+    
+    // Check if both versions have been tested
+    const versionsAllTested = versionDesigns.every(v => v.tested);
+    
+    if (versionsAllTested) {
+        // Reset tested status for next round
+        versionDesigns.forEach(v => v.tested = false);
+    }
     
     // Activate next penguin
     activateNextPenguin();
@@ -417,12 +439,69 @@ function playSound(soundFile) {
     sound.play();
 }
 
+function resetGame() {
+    // Stop any ongoing timer
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+    
+    // Reset game state
+    gameActive = false;
+    score = 0;
+    timeLeft = 60;
+    penguinQueue = [];
+    penguinOnTest = false;
+    currentPenguin = null;
+    testingResults = [];
+    
+    // Reset UI elements
+    scoreElement.textContent = '0';
+    timerElement.textContent = '60';
+    queueArea.innerHTML = '';
+    resultsBody.innerHTML = '';
+    
+    // Reset version testing status
+    versionDesigns.forEach(v => v.tested = false);
+    
+    // Remove any existing visualization
+    const visualization = document.querySelector('.weight-visualization');
+    if (visualization) {
+        visualization.remove();
+    }
+    
+    // Reset button states
+    startBtn.style.display = 'inline-block';
+    testBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    
+    // Reset testing stations
+    const screenA = stationA.querySelector('.screen-content');
+    screenA.style.backgroundColor = versionDesigns[0].color;
+    
+    const screenB = stationB.querySelector('.screen-content');
+    screenB.style.backgroundColor = versionDesigns[1].color;
+    
+    // Reset timers in stations
+    const timerA = document.getElementById('timer-a');
+    const timerB = document.getElementById('timer-b');
+    if (timerA) timerA.textContent = '0.0s';
+    if (timerB) timerB.textContent = '0.0s';
+    
+    // Clear message box with a reset instruction
+    showMessage("Game reset. Press Start to begin a new testing session!");
+    
+    // Ensure buttons are in their initial state
+    testBtn.disabled = false;
+    nextBtn.disabled = true;
+}
+
 // Initialize the game
 function init() {
     testBtn.style.display = 'none';
     nextBtn.style.display = 'none';
     testBtn.disabled = false;
     nextBtn.disabled = true;
+    resetBtn.style.display = 'inline-block'; // Ensure reset button is visible
 }
 
 // Start the game
