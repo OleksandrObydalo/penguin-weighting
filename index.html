@@ -2,32 +2,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linux Penguin A/B Testing</title>
+    <title>Linux Penguin Weighing</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="game-container">
         <div class="game-header">
-            <div class="score-container">Tested: <span id="score">0</span></div>
+            <div class="score-container">Weighed: <span id="score">0</span></div>
             <div class="timer-container">Time: <span id="timer">60</span>s</div>
         </div>
         
         <div class="game-area">
             <div class="island">
-                <div class="testing-area">
-                    <div class="test-stations">
-                        <div class="test-station" id="station-a">
-                            <div class="station-label">Version A</div>
-                            <div class="computer-screen">
-                                <div class="screen-content"></div>
-                            </div>
-                        </div>
-                        <div class="test-station" id="station-b">
-                            <div class="station-label">Version B</div>
-                            <div class="computer-screen">
-                                <div class="screen-content"></div>
-                            </div>
-                        </div>
+                <div class="scale-area">
+                    <div class="scale">
+                        <div class="scale-reading" id="scale-reading">0.0 kg</div>
+                        <div class="scale-platform"></div>
                     </div>
                 </div>
                 <div class="queue-area" id="queue-area">
@@ -38,21 +28,22 @@
         </div>
         
         <div class="controls">
-            <button id="test-btn">Run Test</button>
+            <button id="weigh-btn">Weigh Penguin</button>
             <button id="next-btn">Next Penguin</button>
-            <button id="start-btn">Start Testing</button>
-            <button id="reset-btn">Reset</button>
+            <button id="start-btn">Start Game</button>
         </div>
         
         <div class="results-container">
-            <h3>Testing Results</h3>
+            <h3>Weighing Results</h3>
             <table id="results-table">
                 <thead>
                     <tr>
                         <th>Name</th>
                         <th>Distribution</th>
-                        <th>Version</th>
-                        <th>Time (s)</th>
+                        <th>Weight (kg)</th>
+                        <th>Wing Length (cm)</th>
+                        <th>Beak Length (cm)</th>
+                        <th>Time</th>
                         <th>Timestamp</th>
                     </tr>
                 </thead>
